@@ -51,7 +51,7 @@ jobs:
         with:
           solution-file: artifacts/solutions/solution-artifact/${{ env.SOLUTION_NAME }}.zip
           solution-folder: out/solutions/${{ env.SOLUTION_NAME }}
-          solution-type: 'unmananged'
+          solution-type: 'Unmanaged'
           overwrite-files: true
        
       - name: branch-solution, prepare it for a PullRequest
