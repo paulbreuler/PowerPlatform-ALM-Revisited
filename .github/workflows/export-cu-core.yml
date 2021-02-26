@@ -2,12 +2,12 @@ name: Manual or API export and commit CUCore
 
 on:
    repository_dispatch: 
-    types: [ export_cucore]
+    types: [ export_contosocore]
    workflow_dispatch:
 
 # Define common strings 
 env: 
-   SOLUTION_NAME: CUCore
+   SOLUTION_NAME: ContosoCore
    CRM_URL: https://alm-dev-core64.crm.dynamics.com
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: cucore_unmanaged
+          name: solution-artifact
           path: out/exported/${{ env.SOLUTION_NAME }}.zip        
           
   commit-solution:
@@ -45,16 +45,11 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           path: artifacts/solutions
-          
-      - name: Move files
-        run: |
-           mv artifacts/solutions/cucore_managed/*.zip artifacts/solutions
-           mv artifacts/solutions/cucore_unmanaged/*.zip artifacts/solutions
         
       - name: unpack-solution action
         uses: microsoft/powerplatform-actions/unpack-solution@v0.1.8  
         with:
-          solution-file: artifacts/solutions/${{ env.SOLUTION_NAME }}.zip
+          solution-file: artifacts/solutions/solution-artifact/${{ env.SOLUTION_NAME }}.zip
           solution-folder: out/solutions/${{ env.SOLUTION_NAME }}
           solution-type: 'unmananged'
           overwrite-files: true
