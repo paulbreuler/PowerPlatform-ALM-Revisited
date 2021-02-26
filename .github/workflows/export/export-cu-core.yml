@@ -1,0 +1,68 @@
+name: Manual or API export and commit CUCore
+
+on:
+   repository_dispatch: 
+    types: [ export_cucore]
+   workflow_dispatch:
+
+# Define common strings 
+env: 
+   SOLUTION_NAME: CUCore
+   CRM_URL: https://alm-dev-core64.crm.dynamics.com
+
+jobs:
+
+  export-unmanaged:
+
+    runs-on: windows-latest
+
+    steps:
+
+      - name: export-solution action
+        uses: microsoft/powerplatform-actions/export-solution@v0
+        with:
+          environment-url: ${{ env.CRM_URL }}
+          app-id: ${{ secrets.APPID }}
+          client-secret: ${{ secrets.CLIENT_SECRET }}
+          solution-name: ${{ env.SOLUTION_NAME }}
+          solution-output-file: out/exported/${{ env.SOLUTION_NAME }}.zip
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: cucore_unmanaged
+          path: out/exported/${{ env.SOLUTION_NAME }}.zip        
+          
+  commit-solution:
+     
+    needs: [export-unmanaged]
+    
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts/solutions
+          
+      - name: Move files
+        run: |
+           mv artifacts/solutions/cucore_managed/*.zip artifacts/solutions
+           mv artifacts/solutions/cucore_unmanaged/*.zip artifacts/solutions
+        
+      - name: unpack-solution action
+        uses: microsoft/powerplatform-actions/unpack-solution@v0
+        with:
+          solution-file: artifacts/solutions/${{ env.SOLUTION_NAME }}.zip
+          solution-folder: out/solutions/${{ env.SOLUTION_NAME }}
+          solution-type: 'unmananged'
+          overwrite-files: true
+       
+      - name: branch-solution, prepare it for a PullRequest
+        uses: microsoft/powerplatform-actions/branch-solution@v0
+        with:
+          solution-folder: out/solutions/${{ env.SOLUTION_NAME }}
+          solution-target-folder: solutions/${{ env.SOLUTION_NAME }}/src
+          repo-token: ${{ secrets.GITHUBTOKEN }}
+          allow-empty-commit: true
